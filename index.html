@@ -1,49 +1,355 @@
-HTML
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Inventario NoSQL</title>
-<style>
-body { font-family: Arial, sans-serif; background: #f4f6f9; padding: 20px; }
-.container { max-width: 600px; margin: 0 auto; }
-.card { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;
-box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-input, button { width: 100%; padding: 10px; margin: 8px 0; box-sizing: border-box; }
-button { background: #0066cc; color: white; border: none; cursor: pointer; font-weight:
-bold; }
-table { width: 100%; border-collapse: collapse; background: white; }
-th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-th { background-color: #0066cc; color: white; }
-</style>
+
+<title>Inventario CRUD</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
 </head>
-<body>
-<div class="container">
-<h2> Panel de Inventario (MongoDB Atlas)</h2>
+
+
+<body class="bg-blue-100 p-8">
+
+
+<div class="max-w-4xl mx-auto bg-white p-8 rounded-3xl shadow">
+
+
+<h1 class="text-4xl font-bold text-blue-600 text-center mb-6">
+
+📦 Inventario de Productos
+
+</h1>
 
 
 
-<div class="card">
-<h3>Registrar Producto</h3>
-<form id="formProducto">
-<input type="text" id="nombre" placeholder="Nombre del artículo" required>
-<input type="number" id="precio" placeholder="Precio ($)" required>
-<input type="number" id="existencia" placeholder="Cantidad" required>
-<button type="submit">Enviar a la Nube</button>
-</form>
-</div>
+<input id="nombre"
+class="w-full border p-3 rounded mb-3"
+placeholder="Nombre producto">
 
-<div class="card">
-<h3>Existencias en Base de Datos</h3>
-<table>
+
+
+<input id="categoria"
+class="w-full border p-3 rounded mb-3"
+placeholder="Categoría">
+
+
+
+<input id="precio"
+type="number"
+class="w-full border p-3 rounded mb-3"
+placeholder="Precio">
+
+
+
+<input id="cantidad"
+type="number"
+class="w-full border p-3 rounded mb-3"
+placeholder="Cantidad">
+
+
+
+<button onclick="guardar()"
+class="bg-blue-600 text-white px-5 py-3 rounded-xl w-full">
+
+Guardar producto 📦
+
+</button>
+
+
+
+
+<table class="w-full mt-8 border">
+
+
 <thead>
-<tr><th>Artículo</th><th>Precio</th><th>Stock</th></tr>
+
+<tr class="bg-blue-300">
+
+<th>Nombre</th>
+<th>Categoría</th>
+<th>Precio</th>
+<th>Cantidad</th>
+<th>Acciones</th>
+
+</tr>
+
 </thead>
+
+
 <tbody id="tabla"></tbody>
+
+
 </table>
+
+
 </div>
-</div>
-<script src="app.js"></script>
+
+
+
+
+
+<script>
+
+
+const API_URL =
+"https://inventario-backend-bo7g.onrender.com/productos";
+
+
+
+let editando=null;
+
+
+
+
+
+async function guardar(){
+
+
+const producto={
+
+
+nombre:
+document.getElementById("nombre").value,
+
+
+categoria:
+document.getElementById("categoria").value,
+
+
+precio:
+Number(document.getElementById("precio").value),
+
+
+cantidad:
+Number(document.getElementById("cantidad").value)
+
+
+};
+
+
+
+
+if(editando){
+
+
+
+await fetch(`${API_URL}/${editando}`,{
+
+method:"PUT",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify(producto)
+
+});
+
+
+
+editando=null;
+
+
+
+}else{
+
+
+
+await fetch(API_URL,{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify(producto)
+
+});
+
+
+}
+
+
+
+limpiar();
+
+mostrar();
+
+
+}
+
+
+
+
+
+
+
+async function mostrar(){
+
+
+const res =
+await fetch(API_URL);
+
+
+
+const datos =
+await res.json();
+
+
+
+tabla.innerHTML="";
+
+
+
+datos.forEach(p=>{
+
+
+tabla.innerHTML+=`
+
+
+<tr class="border text-center">
+
+
+<td>${p.nombre}</td>
+
+<td>${p.categoria}</td>
+
+<td>$${p.precio}</td>
+
+<td>${p.cantidad}</td>
+
+
+<td>
+
+
+
+<button
+
+onclick="editar('${p._id}',
+'${p.nombre}',
+'${p.categoria}',
+'${p.precio}',
+'${p.cantidad}')"
+
+class="bg-yellow-400 px-2 rounded">
+
+Editar
+
+</button>
+
+
+
+<button
+
+onclick="eliminar('${p._id}')"
+
+class="bg-red-500 text-white px-2 rounded">
+
+Eliminar
+
+</button>
+
+
+</td>
+
+
+</tr>
+
+
+
+`;
+
+
+});
+
+
+}
+
+
+
+
+
+
+
+function editar(id,nombre,categoria,precio,cantidad){
+
+
+
+document.getElementById("nombre").value=nombre;
+
+
+document.getElementById("categoria").value=categoria;
+
+
+document.getElementById("precio").value=precio;
+
+
+document.getElementById("cantidad").value=cantidad;
+
+
+
+editando=id;
+
+
+
+}
+
+
+
+
+
+
+
+async function eliminar(id){
+
+
+await fetch(`${API_URL}/${id}`,{
+
+method:"DELETE"
+
+});
+
+
+mostrar();
+
+
+}
+
+
+
+
+
+
+function limpiar(){
+
+
+nombre.value="";
+
+categoria.value="";
+
+precio.value="";
+
+cantidad.value="";
+
+
+}
+
+
+
+
+mostrar();
+
+
+
+</script>
+
+
+
 </body>
+
 </html>
